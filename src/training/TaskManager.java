@@ -182,7 +182,7 @@ public class TaskManager {
 				importance = "false";
 				break;
 		}
-		String sthg;
+
 		String lineToBeSavedToFile = description + ", " + date + ", " + importance + "\n";
 		
 		String confirmation = null;
