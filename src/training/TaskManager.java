@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.util.Arrays;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Scanner;
+
 import training.ConsoleColors;
 
 public class TaskManager {
@@ -152,27 +154,54 @@ public class TaskManager {
 		
 	}
 	
+	public static boolean dateValid(String dateStr) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate date = LocalDate.parse(dateStr, formatter);
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+        return true;
+    }
+	
 	private static void quit() {
 		System.out.println("Thank you for using TaskManager.");
 		System.out.println("Goodbye!");
 	}
 	
-	private static void addTask(Scanner userInputScanner, Scanner fileScanner) {
-		System.out.println("Please add task description:");
-		String description = takeActionFromUser(userInputScanner);
-		
-		System.out.println("Please add task due date: [YYYY-MM-DD] or type in [today]");
-		String date = takeActionFromUser(userInputScanner);
+	private static boolean checkDateInputConditions(String date) {
 		if(date.equalsIgnoreCase("today")) {
-//			LocalDate now = new LocalDate();
-//			date = LocalDate.now();
+			return true;
+		} else if(dateValid(date)) {
+			return true;
+		}
+		return false;
+	}
+	
+	private static void addTask(Scanner userInputScanner, Scanner fileScanner) {
+		
+		String description = null;
+		do {
+			System.out.println("Please add task description: [max 40 signs]");
+			description = takeActionFromUser(userInputScanner);
+		} while(description.length() >= 40 || description.length() <= 1);
+		
+		String date = null;
+		do {
+			System.out.println("Please add task due date: [YYYY-MM-DD] or type in [today]");
+			date = takeActionFromUser(userInputScanner);
+		} while(!checkDateInputConditions(date));
+		
+		if(date.equalsIgnoreCase("today")) {
+			LocalDate today = LocalDate.now();
+			date = today.toString();
 		}
 		
 		String importance = null;
 		do {
 			System.out.println("Is your task important? [yes/no]");
 			importance = takeActionFromUser(userInputScanner).toLowerCase();
-		} while(importance == "yes" || importance == "no");
+		} while(!importance.equals("yes") && !importance.equals("no"));
 		
 		switch(importance) {
 			case "yes":
@@ -190,7 +219,7 @@ public class TaskManager {
 			System.out.println("This task will be saved: \n" + lineToBeSavedToFile);
 			System.out.println("Are you sure? [yes/no]");
 			confirmation = takeActionFromUser(userInputScanner).toLowerCase();
-		} while(confirmation == "yes" || confirmation == "no");
+		} while(confirmation.equals("yes") && confirmation.equals("no"));
 		
 		if(confirmation.equalsIgnoreCase("yes")) {
 			
@@ -223,6 +252,6 @@ public class TaskManager {
 	
 	private static void help() {
 		System.out.println("*** HELP SECTION ***");
-		System.out.println("1. To execute a command either type in the command's number(if given) or\n whatever the program asks you to. Next you should press ENTER.");
+		System.out.println("1. To execute a command either type in the command's number(if given) or\n whatever the program asks you to. Next you should press ENTER.\n");
 	}
 }
