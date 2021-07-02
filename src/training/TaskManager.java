@@ -75,10 +75,12 @@ public class TaskManager {
 		String line = null;
 		for(int i = 0; fileScanner.hasNextLine(); i++) {
 			line = fileScanner.nextLine();
-			String[] splitLine = line.split(",", -2);
-			tasks = increaseArraySize(tasks);
-			for(int j = 0; j < 3; j++) {
-				tasks[i][j] = splitLine[j];
+			if(!line.isBlank()) {
+				String[] splitLine = line.split(",", -2);
+				tasks = increaseArraySize(tasks);
+				for(int j = 0; j < 3; j++) {
+					tasks[i][j] = splitLine[j];
+				}
 			}
 		}
 		
@@ -106,7 +108,7 @@ public class TaskManager {
 		        addTask(userInputScanner, fileScanner);
 		        break;
 		    case 2:
-		        updateTask();
+		        updateTask(fileScanner);
 		        break;
 		    case 3:
 		        listAllTasks(fileScanner);
@@ -236,8 +238,23 @@ public class TaskManager {
 		
 	}
 	
-	private static void updateTask() {
-		System.out.println("update");
+	private static void updateTask(Scanner fileScanner) {
+		displayTasks(fileScanner, true);
+		System.out.println("Please choose the task to be updated by entering task number.");
+		String[][] tasks = getFileContent();
+		String taskNumber;
+		Scanner sc = new Scanner(System.in);
+		
+		do {
+			taskNumber = sc.next();
+			if(!Character.isDigit(taskNumber.charAt(0)) || ((Integer.valueOf(taskNumber) <= 1 || Integer.valueOf(taskNumber) > tasks.length))) {
+				System.out.printf("Please enter a correct number.Possible values: [1-%s]\n", tasks.length);
+				continue;
+			}
+		} while(!Character.isDigit(taskNumber.charAt(0)) || ((Integer.valueOf(taskNumber) <= 1 || Integer.valueOf(taskNumber) > tasks.length)));
+		
+		String oldTask = (tasks[Integer.valueOf(taskNumber) - 1][0] + tasks[Integer.valueOf(taskNumber) - 1][1] + tasks[Integer.valueOf(taskNumber) - 1][2]);
+		System.out.printf("This task: [%s]\n", oldTask);
 	}
 	
 	private static void listAllTasks(Scanner fileScanner) {
