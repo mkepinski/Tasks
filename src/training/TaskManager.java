@@ -37,11 +37,19 @@ public class TaskManager {
 		}
 		
 		do {
-			input = null;
-			showMenu();
-			input = takeActionFromUser(userInputScanner);
-			processMenuSelection(input, fileScanner, userInputScanner);
-		} while(Integer.valueOf(input) != 6);
+//				userInputScanner = new Scanner(System.in);
+				showMenu();
+				Scanner testScanner = new Scanner(System.in);
+//				if(userInputScanner.hasNextLine()) {
+//					input = takeActionFromUser(userInputScanner);
+				input = testScanner.nextLine();
+					processMenuSelection(input, fileScanner, userInputScanner);
+//				} else {
+//					Scanner testScanner = new Scanner(System.in);
+//					input = testScanner.nextLine();
+//				}
+				
+		} while(!(input == null) || (!input.equals("6")));
 			
 		userInputScanner.close();
 		fileScanner.close();
@@ -103,26 +111,28 @@ public class TaskManager {
 	}
 	
 	private static void processMenuSelection(String input, Scanner fileScanner, Scanner userInputScanner) {
-		switch (Integer.valueOf(input)) {
-		    case 1:
-		        addTask(userInputScanner, fileScanner);
-		        break;
-		    case 2:
-		        updateTask(fileScanner);
-		        break;
-		    case 3:
-		        listAllTasks(fileScanner);
-		        break;
-		    case 4:
-		        removeTask(fileScanner, userInputScanner);
-		        break;
-		    case 5:
-		        help();
-		        break;
-		    case 6:
-		    	break;
-		    default:
-		        System.out.println("Please select a correct option.");
+		if(!input.isBlank()) {
+			switch (input) {
+			    case "1":
+			        addTask(userInputScanner, fileScanner);
+			        break;
+			    case "2":
+			        updateTask(fileScanner, userInputScanner);
+			        break;
+			    case "3":
+			        listAllTasks(fileScanner);
+			        break;
+			    case "4":
+			        removeTask(fileScanner, userInputScanner);
+			        break;
+			    case "5":
+			        help();
+			        break;
+			    case "6":
+			    	break;
+			    default:
+			        System.out.println("Please select a correct option.");
+			}
 		}
 	}
 	
@@ -221,7 +231,7 @@ public class TaskManager {
 			System.out.println("This task will be saved: \n" + lineToBeSavedToFile);
 			System.out.println("Are you sure? [yes/no]");
 			confirmation = takeActionFromUser(userInputScanner).toLowerCase();
-		} while(confirmation.equals("yes") && confirmation.equals("no"));
+		} while(!confirmation.equals("yes") && !confirmation.equals("no"));
 		
 		if(confirmation.equalsIgnoreCase("yes")) {
 			
@@ -238,23 +248,98 @@ public class TaskManager {
 		
 	}
 	
-	private static void updateTask(Scanner fileScanner) {
+	private static void updateTask(Scanner fileScanner, Scanner userInputScanner) {
 		displayTasks(fileScanner, true);
 		System.out.println("Please choose the task to be updated by entering task number.");
 		String[][] tasks = getFileContent();
 		String taskNumber;
-		Scanner sc = new Scanner(System.in);
 		
 		do {
-			taskNumber = sc.next();
-			if(!Character.isDigit(taskNumber.charAt(0)) || ((Integer.valueOf(taskNumber) <= 1 || Integer.valueOf(taskNumber) > tasks.length))) {
+			taskNumber = userInputScanner.next();
+			if(!Character.isDigit(taskNumber.charAt(0)) || ((Integer.valueOf(taskNumber) < 1 || Integer.valueOf(taskNumber) > tasks.length))) {
 				System.out.printf("Please enter a correct number.Possible values: [1-%s]\n", tasks.length);
 				continue;
 			}
-		} while(!Character.isDigit(taskNumber.charAt(0)) || ((Integer.valueOf(taskNumber) <= 1 || Integer.valueOf(taskNumber) > tasks.length)));
+		} while(!Character.isDigit(taskNumber.charAt(0)) || ((Integer.valueOf(taskNumber) < 1 || Integer.valueOf(taskNumber) > tasks.length)));
 		
 		String oldTask = (tasks[Integer.valueOf(taskNumber) - 1][0] + tasks[Integer.valueOf(taskNumber) - 1][1] + tasks[Integer.valueOf(taskNumber) - 1][2]);
-		System.out.printf("This task: [%s]\n", oldTask);
+		System.out.printf("\nThis task: [%s] will be replaced.\n", oldTask);
+		
+		System.out.printf("Old description: %s\n", tasks[Integer.valueOf(taskNumber) - 1][0]);
+		String description = null;
+		Scanner scanner = new Scanner(System.in);
+		do {
+			System.out.println("Please add task description: [max 40 signs]");
+			description = scanner.nextLine();
+		} while(description.length() >= 40 || description.length() <= 1);
+		
+		System.out.printf("Old due date: %s\n", tasks[Integer.valueOf(taskNumber) - 1][1]);
+		String date = null;
+		scanner = new Scanner(System.in);
+		
+		do {
+			System.out.println("Please add task due date: [YYYY-MM-DD] or type in [today]");
+			date = scanner.nextLine();
+		} while(!checkDateInputConditions(date));
+		
+		if(date.equalsIgnoreCase("today")) {
+			LocalDate today = LocalDate.now();
+			date = today.toString();
+		}
+		
+		String importance = null;
+		scanner = new Scanner(System.in);
+		do {
+			System.out.println("Is your task important? [yes/no]");
+			importance = scanner.nextLine().toLowerCase();
+		} while(!importance.equals("yes") && !importance.equals("no"));
+		
+		switch(importance) {
+			case "yes":
+				importance = "true";
+				break;
+			case "no":
+				importance = "false";
+				break;
+		}
+
+		String lineToBeSavedToFile = description + ", " + date + ", " + importance + "\n";
+		
+		String confirmation = null;
+		scanner = new Scanner(System.in);
+		do {
+			System.out.println("This task will be saved: \n" + lineToBeSavedToFile);
+			System.out.println("Are you sure? [yes/no]");
+			confirmation = scanner.nextLine().toLowerCase();
+		} while(!confirmation.equals("yes") && !confirmation.equals("no"));
+		
+		if(confirmation.equalsIgnoreCase("yes")) {
+			
+			try {
+				tasks[Integer.valueOf(taskNumber) - 1][0] = description;
+				tasks[Integer.valueOf(taskNumber) - 1][1] = date;
+				tasks[Integer.valueOf(taskNumber) - 1][2] = importance;
+				FileWriter fw = new FileWriter(fileAbsolutePath, false);
+				
+				for(int i = 0; i < tasks.length; i++) {
+					String line = "";
+					for(int j = 0; j < tasks[i].length; j++) {
+						line += tasks[i][j].trim();
+						if(j < 2) {
+							line += ", ";
+						}
+					}
+					fw.append(line).append("\n");
+				}
+				
+				fw.close();
+			} catch(IOException ioe) {
+				System.out.println(ioExcMsg);
+				ioe.getStackTrace();
+			}
+			System.out.println("Task has been successfully updated!");
+		}
+		scanner.close();
 	}
 	
 	private static void listAllTasks(Scanner fileScanner) {
