@@ -8,6 +8,8 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import training.ConsoleColors;
@@ -123,7 +125,7 @@ public class TaskManager {
 			        listAllTasks(fileScanner);
 			        break;
 			    case "4":
-			        removeTask(fileScanner, userInputScanner);
+			        deleteTask(fileScanner, userInputScanner);
 			        break;
 			    case "5":
 			        help();
@@ -250,36 +252,40 @@ public class TaskManager {
 	
 	private static void updateTask(Scanner fileScanner, Scanner userInputScanner) {
 		displayTasks(fileScanner, true);
-		System.out.println("Please choose the task to be updated by entering task number.");
-		String[][] tasks = getFileContent();
-		String taskNumber;
+		List<String[]> tasksList = new ArrayList<>();
+		String[][] tasksArray = getFileContent();
+		for(int i = 0; i < tasksArray.length; i++) {
+			tasksList.add(tasksArray[i]);
+		}
 		
-		do {
-			taskNumber = userInputScanner.next();
-			if(!Character.isDigit(taskNumber.charAt(0)) || ((Integer.valueOf(taskNumber) < 1 || Integer.valueOf(taskNumber) > tasks.length))) {
-				System.out.printf("Please enter a correct number.Possible values: [1-%s]\n", tasks.length);
-				continue;
+		boolean whileBoolVar = true;
+		String string_input = null;
+		while(whileBoolVar) {
+			System.out.println("Which task you wish to change? Type in its number.");
+			string_input = takeActionFromUser(userInputScanner);
+			if(Character.isDigit(string_input.charAt(0))) {
+				whileBoolVar = false;
 			}
-		} while(!Character.isDigit(taskNumber.charAt(0)) || ((Integer.valueOf(taskNumber) < 1 || Integer.valueOf(taskNumber) > tasks.length)));
-		
-		String oldTask = (tasks[Integer.valueOf(taskNumber) - 1][0] + tasks[Integer.valueOf(taskNumber) - 1][1] + tasks[Integer.valueOf(taskNumber) - 1][2]);
-		System.out.printf("\nThis task: [%s] will be replaced.\n", oldTask);
-		
-		System.out.printf("Old description: %s\n", tasks[Integer.valueOf(taskNumber) - 1][0]);
+		}
+		int int_input = Integer.valueOf(string_input) - 1;
+		String[] oldTaskArr = tasksList.get(int_input);
+		String oldTask = "";
+		for(String s : oldTaskArr) {
+			oldTask += s.trim();
+			oldTask += " ";
+		}
+		System.out.printf("This task will be changed: %s\n", oldTask);
+
 		String description = null;
-		Scanner scanner = new Scanner(System.in);
 		do {
-			System.out.println("Please add task description: [max 40 signs]");
-			description = scanner.nextLine();
+			System.out.println("New task description:: [max 40 signs]");
+			description = takeActionFromUser(userInputScanner);
 		} while(description.length() >= 40 || description.length() <= 1);
 		
-		System.out.printf("Old due date: %s\n", tasks[Integer.valueOf(taskNumber) - 1][1]);
 		String date = null;
-		scanner = new Scanner(System.in);
-		
 		do {
 			System.out.println("Please add task due date: [YYYY-MM-DD] or type in [today]");
-			date = scanner.nextLine();
+			date = takeActionFromUser(userInputScanner);
 		} while(!checkDateInputConditions(date));
 		
 		if(date.equalsIgnoreCase("today")) {
@@ -288,10 +294,9 @@ public class TaskManager {
 		}
 		
 		String importance = null;
-		scanner = new Scanner(System.in);
 		do {
 			System.out.println("Is your task important? [yes/no]");
-			importance = scanner.nextLine().toLowerCase();
+			importance = takeActionFromUser(userInputScanner).toLowerCase();
 		} while(!importance.equals("yes") && !importance.equals("no"));
 		
 		switch(importance) {
@@ -302,34 +307,84 @@ public class TaskManager {
 				importance = "false";
 				break;
 		}
-
-		String lineToBeSavedToFile = description + ", " + date + ", " + importance + "\n";
 		
 		String confirmation = null;
-		scanner = new Scanner(System.in);
 		do {
-			System.out.println("This task will be saved: \n" + lineToBeSavedToFile);
 			System.out.println("Are you sure? [yes/no]");
-			confirmation = scanner.nextLine().toLowerCase();
+			confirmation = takeActionFromUser(userInputScanner).toLowerCase();
 		} while(!confirmation.equals("yes") && !confirmation.equals("no"));
 		
 		if(confirmation.equalsIgnoreCase("yes")) {
 			
 			try {
-				tasks[Integer.valueOf(taskNumber) - 1][0] = description;
-				tasks[Integer.valueOf(taskNumber) - 1][1] = date;
-				tasks[Integer.valueOf(taskNumber) - 1][2] = importance;
+				tasksArray[int_input][0] = description;
+				tasksArray[int_input][1] = date;
+				tasksArray[int_input][2] = importance;
 				FileWriter fw = new FileWriter(fileAbsolutePath, false);
-				
-				for(int i = 0; i < tasks.length; i++) {
+				for(int i = 0; i < tasksArray.length; i++) {
 					String line = "";
-					for(int j = 0; j < tasks[i].length; j++) {
-						line += tasks[i][j].trim();
+					for(int j = 0; j < tasksArray[i].length; j++) {
+						line += tasksArray[i][j];
 						if(j < 2) {
 							line += ", ";
 						}
 					}
 					fw.append(line).append("\n");
+				}
+				fw.close();
+			} catch(IOException ioe) {
+				System.out.println(ioExcMsg);
+				ioe.getStackTrace();
+			}
+			System.out.println("Task has been successfully updated!");
+		}
+	}
+	
+	private static void listAllTasks(Scanner fileScanner) {
+		displayTasks(fileScanner, false);
+	}
+	
+	private static void deleteTask(Scanner fileScanner, Scanner userInputScanner) {
+		displayTasks(fileScanner, true);
+		boolean whileBoolVar = true;
+		String string_input = null;
+		while(whileBoolVar) {
+			System.out.println("Which task you wish to delete? Type in its number.");
+			string_input = takeActionFromUser(userInputScanner);
+			if(Character.isDigit(string_input.charAt(0))) {
+				whileBoolVar = false;
+			}
+		}
+		int int_input = Integer.valueOf(string_input) - 1;
+		
+		String[][] tasksArray = getFileContent();
+		List<String> tasksList = new ArrayList<>();
+		for(int i = 0; i < tasksArray.length; i++) {
+			String line = "";
+			for(int j = 0; j < tasksArray[i].length; j++) {
+				if(i != int_input) {
+					line += tasksArray[i][j];
+					if(j < 2) {
+						line += ", ";
+					}
+				}
+			}
+			tasksList.add(line);
+		}
+		
+		String confirmation = null;
+		do {
+			System.out.println("Are you sure? [yes/no]");
+			confirmation = takeActionFromUser(userInputScanner).toLowerCase();
+		} while(!confirmation.equals("yes") && !confirmation.equals("no"));
+		
+		if(confirmation.equalsIgnoreCase("yes")) {
+			
+			try {
+
+				FileWriter fw = new FileWriter(fileAbsolutePath, false);
+				for (String s : tasksList) {
+					fw.append(s).append("\n");
 				}
 				
 				fw.close();
@@ -339,17 +394,6 @@ public class TaskManager {
 			}
 			System.out.println("Task has been successfully updated!");
 		}
-		scanner.close();
-	}
-	
-	private static void listAllTasks(Scanner fileScanner) {
-		displayTasks(fileScanner, false);
-	}
-	
-	private static void removeTask(Scanner fileScanner, Scanner userInputScanner) {
-		displayTasks(fileScanner, true);
-		System.out.println("Which task you wish to be removed? Type in the number on the left.");
-		String taskNumber = takeActionFromUser(userInputScanner);
 	}
 	
 	private static void help() {
