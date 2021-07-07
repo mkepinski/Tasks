@@ -39,19 +39,13 @@ public class TaskManager {
 		}
 		
 		do {
-//				userInputScanner = new Scanner(System.in);
+			
 				showMenu();
 				Scanner testScanner = new Scanner(System.in);
-//				if(userInputScanner.hasNextLine()) {
-//					input = takeActionFromUser(userInputScanner);
-				input = testScanner.nextLine();
-					processMenuSelection(input, fileScanner, userInputScanner);
-//				} else {
-//					Scanner testScanner = new Scanner(System.in);
-//					input = testScanner.nextLine();
-//				}
+				input = takeActionFromUser(userInputScanner);
+				processMenuSelection(input, fileScanner, userInputScanner);	
 				
-		} while(!(input == null) || (!input.equals("6")));
+		} while(!(input == null) && (!input.equals("6")));
 			
 		userInputScanner.close();
 		fileScanner.close();
@@ -63,7 +57,7 @@ public class TaskManager {
 						   "1. Add task\n" +
 						   "2. Update task\n" +
 						   "3. List all tasks\n" +
-						   "4. Remove task\n" +
+						   "4. Delete task\n" +
 						   "5. Help\n" +
 						   "6. Quit program\n");
 	}
@@ -89,7 +83,7 @@ public class TaskManager {
 				String[] splitLine = line.split(",", -2);
 				tasks = increaseArraySize(tasks);
 				for(int j = 0; j < 3; j++) {
-					tasks[i][j] = splitLine[j];
+					tasks[i][j] = splitLine[j].trim();
 				}
 			}
 		}
@@ -171,7 +165,7 @@ public class TaskManager {
 	public static boolean dateValid(String dateStr) {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            LocalDate date = LocalDate.parse(dateStr, formatter);
+            LocalDate.parse(dateStr, formatter);
         } catch (DateTimeParseException e) {
             return false;
         }
@@ -384,7 +378,7 @@ public class TaskManager {
 
 				FileWriter fw = new FileWriter(fileAbsolutePath, false);
 				for (String s : tasksList) {
-					fw.append(s).append("\n");
+					fw.append(s.trim()).append("\n");
 				}
 				
 				fw.close();
@@ -392,7 +386,7 @@ public class TaskManager {
 				System.out.println(ioExcMsg);
 				ioe.getStackTrace();
 			}
-			System.out.println("Task has been successfully updated!");
+			System.out.println("Task has been successfully deleted!");
 		}
 	}
 	
